@@ -2,6 +2,8 @@
 
 #include <cmath>
 
+namespace TransportGuide {
+namespace geo {
 struct Coordinates {
     double lat;
     double lng;
@@ -13,7 +15,7 @@ struct Coordinates {
     }
 };
 
-inline double ComputeDistance(Coordinates from, Coordinates to) {
+inline double ComputeDistance(geo::Coordinates from, geo::Coordinates to) {
     using namespace std;
     if (from == to) {
         return 0;
@@ -22,4 +24,6 @@ inline double ComputeDistance(Coordinates from, Coordinates to) {
     return acos(sin(from.lat * dr) * sin(to.lat * dr)
                 + cos(from.lat * dr) * cos(to.lat * dr) * cos(abs(from.lng - to.lng) * dr))
         * 6371000;
+}
+}
 }
