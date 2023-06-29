@@ -19,23 +19,24 @@ struct RouteInfo {
 class TransportCatalogue {
 public:
 	//Обработка запроса на добавление остановки
-	void AddStopX(std::string name, geo::Coordinates coordinates,
+	void AddStopX(const std::string& name, geo::Coordinates coordinates,
 		std::vector<std::pair<int, std::string>> stops_dist);
 	//Сформировать базу расстояний между остановками
-	//и базу маршрутов, после заполнения всех остановок
+	//и базу маршрутов, после заполнения всех остановок.
 	void CompleteInput();
 	//Временное хранение маршрутов, до получения всех остановок
-	void AddBusTemp(std::string name, std::deque<std::string>);
+	void AddBusTemp(const std::string&, std::deque<std::string>);
 	//Обработка запроса на добавление маршрута
-	void AddBusX(std::string name, std::deque<std::string>);
-	//Сформировать информацию о маршруте
-	RouteInfo GetRouteInfo(std::string name) const;
+	//Подсчет статистики по каждому маршруту.
+	void AddBusX(const std::string&, std::deque<std::string>);
+	//Выдать информацию о маршруте
+	RouteInfo GetRouteInfo(const std::string&) const;
 	//Сформировать информацию об остановке
-	std::set<std::string_view> GeStopInfo(std::string name) const;
+	std::set<std::string_view> GeStopInfo(const std::string&) const;
 	//Проверка наличия автобуса в базе
-	bool IsBus(std::string name) const;
+	bool IsBus(const std::string&) const;
 	//Проверка наличия остановки в базе
-	bool IsStop(std::string name) const;
+	bool IsStop(const std::string&) const;
 
 private:
 	//Хешер для stops_distance
@@ -63,5 +64,7 @@ private:
 	std::deque<std::string> buses_data;
 	//Автобус с остановками на маршруте
 	std::unordered_map<std::string_view, std::vector<std::string_view>> buses_;
+	//Автобус с информацией о маршруте
+	std::unordered_map<std::string_view, RouteInfo> buses_info;
 };
 }

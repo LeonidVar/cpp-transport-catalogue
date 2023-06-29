@@ -4,50 +4,50 @@ using namespace std::string_literals;
 namespace TransportGuide {
 namespace stat {
 
-void ReceiveRequest(const TransportCatalogue& tc, std::string s) {
+void ReceiveRequest(const TransportCatalogue& tc, const std::string& s, std::ostream& os) {
 	if (s.substr(0, 4) == "Stop"s) {
-		PrintStop(tc, s.substr(5));
+		PrintStop(tc, s.substr(5), os);
 	}
 	else if (s.substr(0, 3) == "Bus"s) {
-		PrintRoute(tc, s.substr(4));
+		PrintRoute(tc, s.substr(4), os);
 	}
 	else {
-		std::cout << "Error input!" << std::endl;
+		os << "Error input!" << std::endl;
 	}
 }
 
-void PrintRoute(const TransportCatalogue& tc, std::string bus) {
+void PrintRoute(const TransportCatalogue& tc, const std::string& bus, std::ostream& os) {
 	if (tc.IsBus(bus)) {
 		auto route = tc.GetRouteInfo(bus);
-		std::cout << "Bus "s << bus << ": "
+		os << "Bus "s << bus << ": "
 			<< route.stops_count << " stops on route, "s
 			<< route.unique_stops << " unique stops, "s
 			<< route.length << " route length, "s
 			<< std::setprecision(6) << route.curvature << " curvature"s << std::endl;
 	}
 	else {
-		std::cout << "Bus "s << bus << ": not found"s << std::endl;
+		os << "Bus "s << bus << ": not found"s << std::endl;
 	}
 }
 
-void PrintStop(const TransportCatalogue& tc, std::string stop) {
+void PrintStop(const TransportCatalogue& tc, const std::string& stop, std::ostream& os) {
 	std::cout << "Stop "s << stop;
 
 	if (tc.IsStop(stop)) {
 		std::set<std::string_view> buses = tc.GeStopInfo(stop);
 		if (buses.empty()) {
-			std::cout << ": no buses"s << std::endl;
+			os << ": no buses"s << std::endl;
 		}
 		else {
 			std::cout << ": buses"s;
 			for (auto bus : buses) {
 				std::cout << " " << bus;
 			}
-			std::cout << std::endl;
+			os << std::endl;
 		}
 	}
 	else {
-		std::cout << ": not found"s << std::endl;
+		os << ": not found"s << std::endl;
 	}
 }
 }

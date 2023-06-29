@@ -23,7 +23,5 @@ int main() {
 		TransportGuide::stat::ReceiveRequest(tc, std::move(s));
 	}
 
-
-//	std::cout << "OK\n";
 	return 0;
 }

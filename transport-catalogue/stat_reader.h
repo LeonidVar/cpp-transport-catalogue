@@ -7,11 +7,11 @@ namespace TransportGuide {
 namespace stat {
 
 //Считывает входящий запрос и по первому слову Bus/Stop вызывает соответсвующую функцию вывода
-void ReceiveRequest(const TransportCatalogue& tc, std::string s);
+void ReceiveRequest(const TransportCatalogue& tc, const std::string& s, std::ostream& os = std::cout);
 //Вывод информации о маршруте
-void PrintRoute(const TransportCatalogue& tc, std::string bus);
+void PrintRoute(const TransportCatalogue& tc, const std::string& bus, std::ostream& os);
 //Вывод информации об остановке
-void PrintStop(const TransportCatalogue& tc, std::string stop);
+void PrintStop(const TransportCatalogue& tc, const std::string& stop, std::ostream& os);
 
 }
 }
