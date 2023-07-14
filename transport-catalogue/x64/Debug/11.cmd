@@ -1,1 +1,0 @@
-transport-catalogue.exe <s10_final_opentest_1.json >output.json
