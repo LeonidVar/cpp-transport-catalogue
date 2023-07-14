@@ -3,7 +3,7 @@
 namespace renderer {
 using namespace svg;
 
-void MakeText(std::vector<Text>& texts, const Settings& s, const Point pos, 
+void MapRenderer::MakeText(std::vector<Text>& texts, const Point pos, 
     const std::string_view data, size_t color, bool is_stop) {
     Text text;
     text.SetPosition(pos)
@@ -25,48 +25,35 @@ void MakeText(std::vector<Text>& texts, const Settings& s, const Point pos,
     texts.push_back(std::move(text));
 }
 
-void RenderRoutes(Settings& s, TransportGuide::TransportCatalogue& tc, std::ostream& out) {
-    svg::Document doc;
-    std::vector<geo::Coordinates> coordinates_;;
-    auto all_stops = tc.GetStops();
-    std::set<std::string_view> this_stops;
-
-    // Формирование списков остановок и их координат для существующих маршрутов
-    coordinates_.reserve(all_stops.size());
-    const auto& buses_ = tc.GetBuses();
-    for (const auto& [bus, stops] : buses_) {
-        for (const auto& stop : stops) {
-            coordinates_.push_back(all_stops.at(stop));
-            this_stops.insert(stop);
-        }
-    }
-
-    // Создаём проектор сферических координат на карту
-    const SphereProjector proj{
-    coordinates_.begin(), coordinates_.end(), s.width, s.height, s.padding
-    };
-
-    size_t i = 0; // счетчик палитры цветов
-    std::vector<Text> texts; // названия маршрутов
-    std::vector<Text> stop_texts; // названия остановок
+void MapRenderer::RenderStops(SphereProjector& proj) {
     std::vector <Circle> circles;
-
-    for (const auto& stop : this_stops) {
+    std::vector<Text> stop_texts; // названия остановок
+    for (const auto& stop : actual_stops) {
         Circle circle;
         auto point = proj(all_stops.at(stop));
         circle.SetCenter(point).SetRadius(s.stop_radius).SetFillColor("white");
         circles.push_back(std::move(circle));
-        MakeText(stop_texts, s, point, stop, i, true);
+        MakeText(stop_texts, point, stop, 0, true);
     }
+    for (auto& circle : circles) {
+        doc.Add(std::move(circle));
+    }
+    for (auto& text : stop_texts) {
+        doc.Add(std::move(text));
+    }
+}
 
+void MapRenderer::RenderRoutes(SphereProjector& proj) {
+    size_t i = 0; // счетчик палитры цветов
+    std::vector<Text> texts; // названия маршрутов
     for (const auto& [bus, stops] : buses_) {
         Polyline line;
-        MakeText(texts, s, proj(all_stops.at(stops.front())), bus, i, false); 
+        MakeText(texts, proj(all_stops.at(stops.front())), bus, i, false);
         // Для некольцевых машрутов вторая конечная надпись
         size_t final_stop = tc.GetRouteInfo(std::string(bus)).final_stop;
         if (!tc.GetRouteInfo(std::string(bus)).is_round_trip &&
-            stops[final_stop] != stops.front()) {            
-            MakeText(texts, s, proj(all_stops.at(stops[final_stop])), bus, i, false);
+            stops[final_stop] != stops.front()) {
+            MakeText(texts, proj(all_stops.at(stops[final_stop])), bus, i, false);
         }
 
         for (const auto& stop : stops) {
@@ -84,16 +71,31 @@ void RenderRoutes(Settings& s, TransportGuide::TransportCatalogue& tc, std::ostr
         // Цвета переиспользуются по циклу.
         i < s.color_palette.size() - 1 ? ++i : (i = 0);
     }
-
     for (auto& text : texts) {
         doc.Add(std::move(text));
     }
-    for (auto& circle : circles) {
-        doc.Add(std::move(circle));
+}
+
+
+void MapRenderer::RenderMap() {
+    all_stops = tc.GetStops();
+    // Формирование списков остановок и их координат для существующих маршрутов
+    coordinates_.reserve(all_stops.size());
+    buses_ = tc.GetBuses();
+    for (const auto& [bus, stops] : buses_) {
+        for (const auto& stop : stops) {
+            coordinates_.push_back(all_stops.at(stop));
+            actual_stops.insert(stop);
+        }
     }
-    for (auto& text : stop_texts) {
-        doc.Add(std::move(text));
-    }
+
+    // Создаём проектор сферических координат на карту
+    SphereProjector proj{
+    coordinates_.begin(), coordinates_.end(), s.width, s.height, s.padding
+    };
+
+    RenderRoutes(proj);
+    RenderStops(proj);
     doc.Render(out);
 
 }

@@ -4,17 +4,17 @@ namespace JSON{
 using namespace std::string_literals;
 using namespace domain;
 
-std::string Print(const json::Node& node) {
+std::string JsonReader::Print(const json::Node& node) {
     std::ostringstream out;
-    Print(json::Document{ node }, out);
+    json::Print(json::Document{ node }, out);
     return out.str();
 }
 
-svg::Point GetPoint(const json::Array& data) {
+svg::Point JsonReader::GetPoint(const json::Array& data) {
     return{ data[0].AsDouble(), data[1].AsDouble() };
 }
 
-svg::Color GetColor(const json::Node& color) {
+svg::Color JsonReader::GetColor(const json::Node& color) {
     if (color.IsString()) {
         return { color.AsString() };
     }
@@ -28,20 +28,18 @@ svg::Color GetColor(const json::Node& color) {
     }
 }
 
-void LoadFromJson(TransportGuide::TransportCatalogue& tc, std::istream& input, std::ostream& out) {
-    json::Document doc = json::Load(input);
+void JsonReader::LoadFromJson() {
     const auto& request = doc.GetRoot().AsMap();
     // Обработка запросов на формирование БД
-    BaseRequests(tc, request.at("base_requests"s).AsArray());
+    BaseRequests(request.at("base_requests"s).AsArray());
     tc.CompleteInput();
-
+    // Получение параметров SVG и рисование карты в string
+    RenderSettings(request.at("render_settings"s).AsMap());
     // Обработка запросов на выдачу
-    StatRequests(tc, out, request.at("stat_requests"s).AsArray(),
-        // Получение параметров SVG и рисование карты в string
-        RenderSettings(tc, request.at("render_settings"s).AsMap()));
+    StatRequests(request.at("stat_requests"s).AsArray());       
 }
 
-void BaseRequests(TransportGuide::TransportCatalogue& tc, json::Array base_requests) {
+void JsonReader::BaseRequests(const json::Array& base_requests) {
     for (const auto& input : base_requests) {
         const auto& cur_map = input.AsMap();
         // Добавление остановки
@@ -75,7 +73,7 @@ void BaseRequests(TransportGuide::TransportCatalogue& tc, json::Array base_reque
     }
 }
 
-std::string RenderSettings(TransportGuide::TransportCatalogue& tc, json::Dict render_settings) {
+void JsonReader::RenderSettings(const json::Dict& render_settings) {
     renderer::Settings rs;
     rs.width = render_settings.at("width"s).AsDouble();
     rs.height = render_settings.at("height"s).AsDouble();
@@ -94,12 +92,12 @@ std::string RenderSettings(TransportGuide::TransportCatalogue& tc, json::Dict re
     }
 
     std::ostringstream out;
-    renderer::RenderRoutes(rs, tc, out);
-    return out.str();
+    renderer::MapRenderer mr(rs, tc, out);
+    mr.RenderMap();
+    svg = std::move(out.str());
 }
 
-void StatRequests(TransportGuide::TransportCatalogue& tc, std::ostream& out,
-    json::Array stat_requests, std::string svg) {
+void JsonReader::StatRequests(const json::Array& stat_requests) {
     json::Array out_print;
 
     for (const auto& input : stat_requests) {

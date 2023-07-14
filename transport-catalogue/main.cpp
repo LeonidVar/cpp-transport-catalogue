@@ -5,7 +5,8 @@
 
 int main() {
 	TransportGuide::TransportCatalogue tc;
-	JSON::LoadFromJson(tc, std::cin, std::cout);
+	JSON::JsonReader jr(tc, std::cin, std::cout);
+	jr.LoadFromJson();
 
 	return 0;
 }

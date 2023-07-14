@@ -12,10 +12,29 @@
 #include "map_renderer.h"
 
 namespace JSON {
-void LoadFromJson(TransportGuide::TransportCatalogue& tc, std::istream& input, std::ostream& out);
-void BaseRequests(TransportGuide::TransportCatalogue& tc, json::Array base_requests);
-void StatRequests(TransportGuide::TransportCatalogue& tc, std::ostream& out, json::Array stat_requests, std::string svg);
-std::string RenderSettings(TransportGuide::TransportCatalogue& tc, json::Dict render_settings);
-std::string Print(const json::Node& node);
+
+class JsonReader{
+public:
+	JsonReader(TransportGuide::TransportCatalogue& tc_in, std::istream& input_in, std::ostream& out_in)
+		: tc(tc_in), input(input_in), out(out_in) {}
+
+	void LoadFromJson();
+
+private:
+	
+	void BaseRequests(const json::Array& base_requests);
+	void StatRequests(const json::Array& stat_requests);
+	void RenderSettings(const json::Dict& render_settings);
+	std::string Print(const json::Node& node);
+	svg::Point GetPoint(const json::Array& data);
+	svg::Color GetColor(const json::Node& color);
+
+	TransportGuide::TransportCatalogue& tc;
+	std::istream& input;
+	std::ostream& out;
+	json::Document doc{ json::Load(input) };
+	std::string svg;
+};
+
 
 }

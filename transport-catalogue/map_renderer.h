@@ -105,9 +105,34 @@ private:
     double zoom_coeff_ = 0;
 };
 
+class MapRenderer {
+public:
+    MapRenderer(Settings& settings, TransportGuide::TransportCatalogue& tc_in, std::ostream& out_in)
+    : s(settings), tc(tc_in), out(out_in) {}
 
-void MakeText(std::vector<svg::Text>& texts, const Settings& s, const svg::Point pos,
-    const std::string_view data, size_t color, bool is_stop);
-void RenderRoutes(Settings& s, TransportGuide::TransportCatalogue& tc, std::ostream& out);
+    void RenderMap();
+
+private:
+    Settings& s;
+    TransportGuide::TransportCatalogue& tc;
+    std::ostream& out;
+    svg::Document doc;
+
+    std::map<std::string_view, std::vector<std::string_view>> buses_;
+    std::unordered_map<std::string_view, geo::Coordinates> all_stops;
+    std::vector<geo::Coordinates> coordinates_;
+    std::set<std::string_view> actual_stops;
+    
+
+
+
+    // Формирование надписи на схеме
+    void MakeText(std::vector<svg::Text>& texts, const svg::Point pos,
+        const std::string_view data, size_t color, bool is_stop);
+    void RenderStops(SphereProjector& proj);
+    void RenderRoutes(SphereProjector& proj);
+};
+
+
 
 }
