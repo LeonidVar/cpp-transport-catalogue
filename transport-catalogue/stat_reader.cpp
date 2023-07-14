@@ -40,7 +40,7 @@ void PrintStop(const TransportCatalogue& tc, const std::string& stop, std::ostre
 		}
 		else {
 			std::cout << ": buses"s;
-			for (auto bus : buses) {
+			for (auto& bus : buses) {
 				std::cout << " " << bus;
 			}
 			os << std::endl;

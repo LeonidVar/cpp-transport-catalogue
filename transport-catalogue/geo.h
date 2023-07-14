@@ -2,7 +2,6 @@
 
 #include <cmath>
 
-namespace TransportGuide {
 namespace geo {
 
 constexpr int GEO_RADIUS = 6371000;
@@ -26,6 +25,5 @@ inline double ComputeDistance(geo::Coordinates from, geo::Coordinates to) {
     return acos(sin(from.lat * dr) * sin(to.lat * dr)
                 + cos(from.lat * dr) * cos(to.lat * dr) * cos(abs(from.lng - to.lng) * dr))
         * GEO_RADIUS;
-}
 }
 }

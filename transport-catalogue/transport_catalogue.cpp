@@ -2,10 +2,11 @@
 #include <iostream>
 
 using namespace TransportGuide;
-void TransportCatalogue::AddStopX(const std::string& name,
-	geo::Coordinates coordinates, std::vector<std::pair<int, std::string>> stops_dist) {
-	stops_data.push_back(name);
-	stops_.insert({ stops_data.back(), coordinates});
+using namespace domain;
+
+void TransportCatalogue::AddStopX(const Stop& stop, std::vector<std::pair<int, std::string>>& stops_dist) {
+	stops_data.push_back(stop.name);
+	stops_.insert({ stops_data.back(), stop.xy });
 	stop_tmp_dst[stops_data.back()] = stops_dist;
 }
 
@@ -17,29 +18,36 @@ void TransportCatalogue::CompleteInput() {
 		}
 	}
 
-	for (auto [bus, stops] : bus_tmp) {
-		AddBusX(bus, stops);
+	for (auto& route : bus_tmp) {
+		AddBusX(route);
 	}
-
-
 }
 
-void TransportCatalogue::AddBusTemp(const std::string& name, std::deque<std::string> stops) {
-	bus_tmp.push_back({ std::move(name), std::move(stops) });
+void TransportCatalogue::AddBusTemp(BusRoute& route) {
+	bus_tmp.push_back(std::move(route));
 }
 
-void TransportCatalogue::AddBusX(const std::string& name, std::deque<std::string> stops) {
-	buses_data.push_back(name);
+void TransportCatalogue::AddBusX(BusRoute& route) {
+	buses_data.push_back(route.name);
 	std::vector<std::string_view> stops_sv;
-	for (std::string& stop : stops) {
+	// Номер конечной остановки, используется для некольцевых маршрутов
+	size_t final_stop{ route.stops.size() };
+
+	for (std::string& stop : route.stops) {
 		std::string_view stop_sv = *std::find(stops_data.begin(), stops_data.end(), stop);
 		stops_buses[stop_sv].insert(buses_data.back());
 		stops_sv.push_back(stop_sv);
 	}
 	buses_.insert({ buses_data.back(), stops_sv });
 
+	// Для некольцевого машрута остановки добавляются в обратном порядке
+	if (!route.is_round_trip) {
+		buses_.at(route.name).insert(
+			buses_.at(route.name).end(), stops_sv.rbegin() + 1, stops_sv.rend());
+	}
+
 	//Подсчет и сохарнение статистики по маршруту
-	auto stops_on_route = buses_.at(name);
+	auto stops_on_route = buses_.at(route.name);
 	int stops_count = stops_on_route.size();
 	double geo_length{ 0 };
 	int real_length{ 0 };
@@ -71,7 +79,8 @@ void TransportCatalogue::AddBusX(const std::string& name, std::deque<std::string
 	sort(stops_on_route.begin(), stops_on_route.end());
 	int unique_stops = unique(stops_on_route.begin(), stops_on_route.end()) - stops_on_route.begin();
 
-	buses_info[buses_data.back()] = { stops_count, unique_stops, real_length, curvature };
+	buses_info[buses_data.back()] = { stops_count, unique_stops, real_length, curvature,
+									route.is_round_trip, final_stop - 1 };
 }
 
 bool TransportCatalogue::IsBus(const std::string& name) const {
@@ -93,4 +102,11 @@ std::set<std::string_view> TransportCatalogue::GeStopInfo(const std::string& nam
 	else {
 		return {};
 	}
+}
+
+std::map<std::string_view, std::vector<std::string_view>> TransportCatalogue::GetBuses()  const {
+	return buses_;
+}
+std::unordered_map<std::string_view, geo::Coordinates> TransportCatalogue::GetStops()  const {
+	return stops_;
 }
