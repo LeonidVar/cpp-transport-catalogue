@@ -51,6 +51,7 @@ private:
 
 // Вспомогательный класс для выявления ошибки при компиляции
 // За вызовом StartDict следует не Key и не EndDict.
+// После вызова Value, последовавшего за вызовом Key, вызван не Key и не EndDict.
 class DictItemContext : public BaseContext {
 public:
     DictItemContext(BaseContext base) : BaseContext(base) {}
@@ -64,6 +65,7 @@ public:
 
 // Вспомогательный класс для выявления ошибки при компиляции
 // За вызовом StartArray следует не Value, не StartDict, не StartArray и не EndArray.
+// После вызова StartArray и серии Value следует не Value, не StartDict, не StartArray и не EndArray.
 class ArrItemContext : public BaseContext {
 public:
     ArrItemContext(BaseContext base) : BaseContext(base) {}
@@ -86,33 +88,4 @@ public:
     BaseContext EndArray() = delete;
     Node Build() = delete;
 };
-
-// Вспомогательный класс для выявления ошибки при компиляции
-// После вызова Value, последовавшего за вызовом Key, вызван не Key и не EndDict.
-//class DicValueContext : public BaseContext
-//{
-//public:
-//    DicValueContext(BaseContext base) : BaseContext(base) {}
-//
-//    BaseContext Value(Node::Value) = delete;
-//    DictItemContext StartDict() = delete;
-//    ArrItemContext StartArray() = delete;
-//    BaseContext EndArray() = delete;
-//    Node Build() = delete;
-//};
-
-// Вспомогательный класс для выявления ошибки при компиляции
-// После вызова StartArray и серии Value следует не Value, не StartDict, не StartArray и не EndArray.
-//class ArrValueContext : public BaseContext
-//{
-//public:
-//    ArrValueContext(BaseContext base) : BaseContext(base) {}
-//
-//    KeyContext Key(std::string s) = delete;
-//    BaseContext EndDict() = delete;
-//    Node Build() = delete;
-//
-//    ArrValueContext Value(Node::Value val);
-//};
-
 }
