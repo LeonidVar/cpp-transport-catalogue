@@ -87,7 +87,7 @@ namespace json {
         return DictItemContext{ *this };
     }
 
-    KeyContext Builder::Key(std::string key) {
+    KeyContext Builder::Key(const std::string key) {
         if (key_started) {
             throw std::logic_error("Key() called after Key()");
         }
@@ -105,7 +105,7 @@ namespace json {
         return KeyContext{ *this };
     }
 
-    Builder& Builder::Value(Node::Value value) {
+    Builder& Builder::Value(const Node::Value value) {
         if (root_ == nullptr)
         {
             // GetValue() - для преобразования входящего std::variant
@@ -190,22 +190,22 @@ namespace json {
 
     }
 
-    KeyContext BaseContext::Key(std::string key) {
+    KeyContext BaseContext::Key(const std::string key) {
         return builder_.Key(key);
     }
-    BaseContext BaseContext::Value(Node::Value value) {
+    BaseContext BaseContext::Value(const Node::Value value) {
         return builder_.Value(value);
     }
     DictItemContext BaseContext::StartDict() {
         return builder_.StartDict();
     }
-    DicValueContext KeyContext::Value(Node::Value value) {
+    DictItemContext KeyContext::Value(const Node::Value value) {
         return BaseContext::Value(value);
     }
     ArrItemContext BaseContext::StartArray() {
         return builder_.StartArray();
     }
-    ArrValueContext ArrItemContext::Value(Node::Value value) {
+    ArrItemContext ArrItemContext::Value(const Node::Value value) {
         return BaseContext::Value(value);
     }
     BaseContext BaseContext::EndDict() {
@@ -217,11 +217,5 @@ namespace json {
     Node BaseContext::Build() {
         return builder_.Build();
     }
-
-    ArrValueContext ArrValueContext::Value(Node::Value val)
-    {
-        return BaseContext::Value(std::move(val));
-    }
-
 
 }
