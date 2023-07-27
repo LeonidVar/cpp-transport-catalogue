@@ -29,19 +29,19 @@ svg::Color JsonReader::GetColor(const json::Node& color) {
 }
 
 void JsonReader::LoadFromJson() {
-    const auto& request = doc.GetRoot().AsMap();
+    const auto& request = doc.GetRoot().AsDict();
     // Обработка запросов на формирование БД
     BaseRequests(request.at("base_requests"s).AsArray());
     tc.CompleteInput();
     // Получение параметров SVG и рисование карты в string
-    RenderSettings(request.at("render_settings"s).AsMap());
+    RenderSettings(request.at("render_settings"s).AsDict());
     // Обработка запросов на выдачу
     StatRequests(request.at("stat_requests"s).AsArray());       
 }
 
 void JsonReader::BaseRequests(const json::Array& base_requests) {
     for (const auto& input : base_requests) {
-        const auto& cur_map = input.AsMap();
+        const auto& cur_map = input.AsDict();
         // Добавление остановки
         if (cur_map.at("type"s).AsString() == "Stop"s) {
             Stop stop;
@@ -50,15 +50,15 @@ void JsonReader::BaseRequests(const json::Array& base_requests) {
             stop.name = cur_map.at("name"s).AsString();
             stop.xy.lat = cur_map.at("latitude"s).AsDouble();
             stop.xy.lng = cur_map.at("longitude"s).AsDouble();
-            if (!cur_map.at("road_distances"s).AsMap().empty()) {
-                for (const auto& [key, value] : cur_map.at("road_distances"s).AsMap()) {
+            if (!cur_map.at("road_distances"s).AsDict().empty()) {
+                for (const auto& [key, value] : cur_map.at("road_distances"s).AsDict()) {
                     stops_dist.push_back({ value.AsInt(), key });
                 }
             }
             tc.AddStopX(stop, stops_dist);
         }
         // Добавление маршрута
-        else if (input.AsMap().at("type"s).AsString() == "Bus"s) {
+        else if (input.AsDict().at("type"s).AsString() == "Bus"s) {
             BusRoute route;
             route.name = cur_map.at("name"s).AsString() ;
             for (const auto& now : cur_map.at("stops"s).AsArray()) {
@@ -101,40 +101,52 @@ void JsonReader::StatRequests(const json::Array& stat_requests) {
     json::Array out_print;
 
     for (const auto& input : stat_requests) {
-        json::Dict result;
-        const auto& cur_map = input.AsMap();
+        json::Builder result;
+        result.StartDict();
+
+        const auto& cur_map = input.AsDict();
         if (cur_map.at("type"s).AsString() == "Stop"s) {
             if (tc.IsStop(cur_map.at("name"s).AsString())) {
                 std::set<std::string_view> buses = tc.GeStopInfo(cur_map.at("name"s).AsString());
-                json::Array stop_arr;
+                json::Builder stop_arr_b;
+                stop_arr_b.StartArray();
                 for (auto& bus : buses) {
-                    stop_arr.push_back(std::string(bus));
+                    stop_arr_b.Value(std::string(bus));
                 }
-                result.insert({ {"buses"s, stop_arr}, {"request_id"s, cur_map.at("id"s)} });                
+
+                result
+                    .Key("buses"s).Value(stop_arr_b.EndArray().Build().AsArray())
+                    .Key("request_id"s).Value(cur_map.at("id"s).AsInt());                
             }
             else {
-                result.insert({ {"error_message"s, "not found"s}, {"request_id"s, cur_map.at("id"s)} });
+                result
+                    .Key("error_message"s).Value("not found"s)
+                    .Key("request_id"s).Value(cur_map.at("id"s).AsInt());
             }
         }
-        else if (input.AsMap().at("type"s).AsString() == "Bus"s) {
-            if (tc.IsBus(input.AsMap().at("name"s).AsString())) {
-                auto route = tc.GetRouteInfo(input.AsMap().at("name"s).AsString());
-                result["curvature"s] = route.curvature;
-                result["request_id"s] = input.AsMap().at("id"s);
-                result["route_length"s] = route.length;
-                result["stop_count"s] = route.stops_count;
-                result["unique_stop_count"s] = route.unique_stops;
+        else if (input.AsDict().at("type"s).AsString() == "Bus"s) {
+            if (tc.IsBus(input.AsDict().at("name"s).AsString())) {
+                auto route = tc.GetRouteInfo(input.AsDict().at("name"s).AsString());
+                result
+                    .Key("curvature"s).Value(route.curvature)
+                    .Key("request_id"s).Value(input.AsDict().at("id"s).AsInt())
+                    .Key("route_length"s).Value(route.length)
+                    .Key("stop_count"s).Value(route.stops_count)
+                    .Key("unique_stop_count"s).Value(route.unique_stops);
             }
             else {
-                result["request_id"s] = input.AsMap().at("id"s);
-                result["error_message"s] = "not found"s;
+                result
+                    .Key("request_id"s).Value(input.AsDict().at("id"s).AsInt())
+                    .Key("error_message"s).Value("not found"s);
             }
         }
-        else if (input.AsMap().at("type"s).AsString() == "Map"s) {
-            result["map"s] = svg;
-            result["request_id"s] = input.AsMap().at("id"s);
+        else if (input.AsDict().at("type"s).AsString() == "Map"s) {
+            result
+                .Key("map"s).Value(svg)
+                .Key("request_id"s).Value(input.AsDict().at("id"s).AsInt());
         }
-        out_print.push_back(result);
+
+        out_print.push_back(result.EndDict().Build().AsDict());
     }
     out << Print(out_print);
 }
