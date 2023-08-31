@@ -94,14 +94,16 @@ void TransportCatalogue::CompleteInput() {
 			GraphAddRouteEdges(graph_, stops_, bus_, final_i, stops_.size());
 		}
 	}
+
+	router_ptr = new graph::Router<GraphEdge>(graph_);
 }
 
 std::pair<std::vector<RouteItem>, double> TransportCatalogue::FindRoute(const std::string& from, const std::string& to) {
-	graph::Router<GraphEdge> router(graph_);
+
 	size_t v1 = stops_index.at(from) * 2;
 	size_t v2 = stops_index.at(to) * 2;
 	//graph::Router::RouteInfo ri;
-	auto router_ = router.BuildRoute(v1, v2);
+	auto router_ = router_ptr->BuildRoute(v1, v2);
 
 	if (!router_) return { {}, -1. };
 	

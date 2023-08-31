@@ -79,5 +79,7 @@ private:
 	std::unordered_map<std::string_view, domain::RouteInfo> buses_info;
 	
 	graph::DirectedWeightedGraph<domain::GraphEdge> graph_;
+
+	graph::Router<domain::GraphEdge>* router_ptr{ nullptr };
 };
 }
