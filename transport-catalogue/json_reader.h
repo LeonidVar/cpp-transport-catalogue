@@ -24,6 +24,7 @@ public:
 private:
 	
 	void BaseRequests(const json::Array& base_requests);
+	void RoutingRequest(const json::Dict& routing_settings);
 	void StatRequests(const json::Array& stat_requests);
 	void RenderSettings(const json::Dict& render_settings);
 	std::string Print(const json::Node& node);

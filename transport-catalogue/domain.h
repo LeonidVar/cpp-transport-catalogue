@@ -30,6 +30,29 @@ namespace domain {
 		size_t final_stop; // позиция 2ой конечной оствановки для некольцевых маршрутов
 	};
 
+	struct GraphEdge {
+		double weight;
+		int span_count;
+		std::string_view bus;
+
+		bool operator< (const GraphEdge rhs) const {
+			return weight < rhs.weight;
+		}
+		bool operator> (const GraphEdge rhs) const {
+			return weight > rhs.weight;
+		}
+		GraphEdge operator+ (const GraphEdge rhs) const {
+			return { weight + rhs.weight, span_count, bus };
+		}
+	};
+
+	struct RouteItem {
+		std::string_view start_stop;
+		std::string_view bus;
+		int span_count{ 0 };
+		double time;
+	};
+
 	//Хешер для stops_distance
 	struct PairStopsHasher {
 		size_t operator()(const std::pair<std::string_view, std::string_view> stop_par) const {

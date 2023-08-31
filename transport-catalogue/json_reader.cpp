@@ -32,6 +32,8 @@ void JsonReader::LoadFromJson() {
     const auto& request = doc.GetRoot().AsDict();
     // Обработка запросов на формирование БД
     BaseRequests(request.at("base_requests"s).AsArray());
+    // Получение параметров по скорости и времени ожидания автобуса
+    RoutingRequest(request.at("routing_settings"s).AsDict());
     tc.CompleteInput();
     // Получение параметров SVG и рисование карты в string
     RenderSettings(request.at("render_settings"s).AsDict());
@@ -71,6 +73,11 @@ void JsonReader::BaseRequests(const json::Array& base_requests) {
             throw std::invalid_argument("Error input"s);
         }
     }
+}
+
+void JsonReader::RoutingRequest(const json::Dict& routing_settings) {
+    tc.bus_wait_time_ = routing_settings.at("bus_wait_time"s).AsInt();
+    tc.bus_velocity_ = routing_settings.at("bus_velocity"s).AsDouble() / 60 * 1000;
 }
 
 void JsonReader::RenderSettings(const json::Dict& render_settings) {
@@ -144,6 +151,39 @@ void JsonReader::StatRequests(const json::Array& stat_requests) {
             result
                 .Key("map"s).Value(svg)
                 .Key("request_id"s).Value(input.AsDict().at("id"s).AsInt());
+        }
+        else if (input.AsDict().at("type"s).AsString() == "Route"s) {
+            //if (tc.IsBus(input.AsDict().at("name"s).AsString())) {
+            auto [items, time] = tc.FindRoute(input.AsDict().at("from"s).AsString(), input.AsDict().at("to"s).AsString());
+            if (time >= 0) {
+                result
+                    .Key("request_id"s).Value(input.AsDict().at("id"s).AsInt())
+                    .Key("total_time"s).Value(time)
+                    .Key("items"s)
+                    .StartArray();
+                for (size_t i = 0; i != items.size(); ++i) {
+                    result
+                        .StartDict()
+                        .Key("type"s).Value("Wait"s)
+                        .Key("stop_name"s).Value(std::string(items[i].start_stop))
+                        .Key("time"s).Value(items[i].time)
+                        .EndDict();
+                    ++i;
+                    result
+                        .StartDict()
+                        .Key("type"s).Value("Bus"s)
+                        .Key("bus"s).Value(std::string(items[i].bus))
+                        .Key("span_count"s).Value(items[i].span_count)
+                        .Key("time"s).Value(items[i].time)
+                        .EndDict();
+                }
+                result.EndArray();
+            }
+            else {
+                result
+                    .Key("request_id"s).Value(input.AsDict().at("id"s).AsInt())
+                    .Key("error_message"s).Value("not found"s);
+            }
         }
 
         out_print.push_back(result.EndDict().Build().AsDict());

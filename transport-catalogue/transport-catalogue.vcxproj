@@ -131,10 +131,13 @@
   <ItemGroup>
     <ClInclude Include="domain.h" />
     <ClInclude Include="geo.h" />
+    <ClInclude Include="graph.h" />
     <ClInclude Include="json.h" />
     <ClInclude Include="json_builder.h" />
     <ClInclude Include="json_reader.h" />
     <ClInclude Include="map_renderer.h" />
+    <ClInclude Include="ranges.h" />
+    <ClInclude Include="router.h" />
     <ClInclude Include="stat_reader.h" />
     <ClInclude Include="svg.h" />
     <ClInclude Include="transport_catalogue.h" />
