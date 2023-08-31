@@ -1,4 +1,5 @@
 ﻿#include "json_reader.h"
+#include "transport_router.h"
 
 namespace JSON{
 using namespace std::string_literals;
@@ -77,7 +78,7 @@ void JsonReader::BaseRequests(const json::Array& base_requests) {
 
 void JsonReader::RoutingRequest(const json::Dict& routing_settings) {
     tc.bus_wait_time_ = routing_settings.at("bus_wait_time"s).AsInt();
-    tc.bus_velocity_ = routing_settings.at("bus_velocity"s).AsDouble() / 60 * 1000;
+    tc.bus_velocity_ = routing_settings.at("bus_velocity"s).AsDouble() / 60 * 1000; // км/ч -> м/мин
 }
 
 void JsonReader::RenderSettings(const json::Dict& render_settings) {
@@ -154,7 +155,8 @@ void JsonReader::StatRequests(const json::Array& stat_requests) {
         }
         else if (input.AsDict().at("type"s).AsString() == "Route"s) {
             //if (tc.IsBus(input.AsDict().at("name"s).AsString())) {
-            auto [items, time] = tc.FindRoute(input.AsDict().at("from"s).AsString(), input.AsDict().at("to"s).AsString());
+            auto rg = tc.GetRouteGraph();
+            auto [items, time] = rg.FindRoute(input.AsDict().at("from"s).AsString(), input.AsDict().at("to"s).AsString());
             if (time >= 0) {
                 result
                     .Key("request_id"s).Value(input.AsDict().at("id"s).AsInt())

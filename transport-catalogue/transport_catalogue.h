@@ -11,11 +11,16 @@
 #include "domain.h"
 #include "graph.h"
 #include "router.h"
+//#include "transport_router.h"
+
+class RouteGraph;
 
 namespace TransportGuide {
 
 class TransportCatalogue {
 public:
+	friend class RouteGraph;
+
 	//Обработка запроса на добавление остановки
 	void AddStopX(const domain::Stop& stop, std::vector<std::pair<int, std::string>>& stops_dist);
 	//Сформировать базу расстояний между остановками
@@ -35,10 +40,10 @@ public:
 	//Проверка наличия остановки в базе
 	bool IsStop(const std::string&) const;
 
-	int GetRouteLength(std::string_view bus_, const size_t i_start, const size_t i_stop);
-	void GraphAddRouteEdges(graph::DirectedWeightedGraph<domain::GraphEdge>& graph_, const std::vector<std::string_view>& stops_,
-		std::string_view bus_, const size_t i_start, const size_t i_stop);
-	std::pair<std::vector<domain::RouteItem>, double> FindRoute(const std::string& from, const std::string& to);
+	// подсчет расстояния между остановками на маршруте
+	int GetRouteLength(const std::string_view bus_, const size_t i_start, const size_t i_stop) const;
+
+	const RouteGraph& GetRouteGraph() const;
 
 	// Выдача маршрутов с остановками
 	std::map<std::string_view, std::vector<std::string_view>> GetBuses() const;
@@ -49,6 +54,7 @@ public:
 	int bus_wait_time_{ 0 };
 	//скорость автобуса, в км/ч
 	double bus_velocity_;
+
 
 private:
 	//Список всех остановок, отсюда берутся указатели
@@ -66,8 +72,6 @@ private:
 	//Временное хранение остановки и рассояний до соседей
 	std::unordered_map<std::string_view, std::vector<std::pair<int, std::string>>> stop_tmp_dst;
 
-	//std::unordered_map<std::pair<std::string_view, std::string_view>, int> route_info;
-
 	//Временное хранение маршрутов
 	std::vector<domain::BusRoute> bus_tmp;
 	//Список всех автобусов, отсюда берутся указатели
@@ -78,8 +82,6 @@ private:
 	//std::unordered_map<std::string_view, RouteInfo> buses_info;
 	std::unordered_map<std::string_view, domain::RouteInfo> buses_info;
 	
-	graph::DirectedWeightedGraph<domain::GraphEdge> graph_;
-
-	graph::Router<domain::GraphEdge>* router_ptr{ nullptr };
+	RouteGraph* route_graph_ptr{ nullptr };
 };
 }

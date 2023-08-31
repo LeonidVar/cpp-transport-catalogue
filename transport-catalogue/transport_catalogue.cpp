@@ -1,6 +1,7 @@
 ﻿#include "transport_catalogue.h"
 #include <iostream>
 #include <iterator>
+#include "transport_router.h"
 
 using namespace TransportGuide;
 using namespace domain;
@@ -11,15 +12,12 @@ void TransportCatalogue::AddStopX(const Stop& stop, std::vector<std::pair<int, s
 	stop_tmp_dst[stops_data.back()] = stops_dist;
 }
 
-int TransportCatalogue::GetRouteLength(std::string_view bus_, const size_t from, const size_t to) {
-	auto stops_on_route = buses_.at(bus_);
-	//int stops_count = stops_on_route.size();
+int TransportCatalogue::GetRouteLength(const std::string_view bus_, const size_t from, const size_t to) const {
+	auto& stops_on_route = buses_.at(bus_);
 	int length{ 0 };
 	for (size_t i = from; i != to; ) {
-		//auto check_it = std::find(stops_on_route.begin(), stops_on_route.end(), to);
 		auto stop1 = stops_on_route[i];
 		++i;
-		//if (iter == stops_on_route.end()) break;
 		auto stop2 = stops_on_route[i];
 		//Поиск прямой или обратной пары остановок
 		if (stops_distance.count({ stop1, stop2 })) {
@@ -39,28 +37,9 @@ int TransportCatalogue::GetRouteLength(std::string_view bus_, const size_t from,
 	//}
 }
 
-// i_start, i_stop - индексы начальной и конечной остановок на маршруте для добавления в граф
-void TransportCatalogue::GraphAddRouteEdges(graph::DirectedWeightedGraph<GraphEdge>& graph_, const std::vector<std::string_view>& stops_,
-	std::string_view bus_, const size_t i_start, const size_t i_stop) {
-	// для каждой остановки на маршруте с индексом выхода
-	for (size_t i = i_start; i < i_stop; ++i) {
-		size_t v1 = stops_index.at(stops_[i]);
-		// добавляем ребра до всех следующих остановок с индексом входа
-		for (size_t j = i + 1; j < stops_.size(); ++j) {
-			size_t v2 = stops_index.at(stops_[j]);
-			GraphEdge g_e_;
-			g_e_.weight = static_cast<double>(GetRouteLength(bus_, i, j) / bus_velocity_);
-			g_e_.bus = bus_;
-			g_e_.span_count = j - i;
-			graph_.AddEdge({ v1 * 2 + 1, v2 * 2, g_e_ });
-			//bus_spans.push_back({ bus_, j - i });
-		}
-	}
-}
-
 void TransportCatalogue::CompleteInput() {
 	for (const auto& [first_stop, distances] : stop_tmp_dst) {
-		for (const auto& [ dist, second_stop ]:distances) {
+		for (const auto& [dist, second_stop] : distances) {
 			std::string_view sec_stop = *std::find(stops_data.begin(), stops_data.end(), second_stop);
 			stops_distance[{first_stop, sec_stop}] = dist;
 		}
@@ -74,54 +53,8 @@ void TransportCatalogue::CompleteInput() {
 		stops_index[stops_data[i]] = i;
 	}
 
-	//std::vector<std::pair<std::string_view, int>> stop_spans;
-	//std::vector<std::pair<std::string_view, int>> bus_spans;
-	graph::DirectedWeightedGraph<GraphEdge> graph_t(stops_data.size() * 2);
-	graph_ = std::move(graph_t);
-	for (size_t index = 0; index != stops_data.size(); ++index) {		
-		graph_.AddEdge({ index * 2, index * 2 + 1, 
-			{static_cast<double>(bus_wait_time_), 0, ""} });
-		//stop_spans.push_back({ std::string_view(stops_data[index]), 0});
-	}
-	for (const auto& [bus_, stops_] : buses_) {
-		if (buses_info[bus_].is_round_trip) {
-			GraphAddRouteEdges(graph_, stops_, bus_, 0, stops_.size() - 1);
-		}
-		// для не круговых маршрутов то же самое, только как для двух отдельных (туда и обратно)
-		else {
-			size_t final_i = buses_info[bus_].final_stop;
-			GraphAddRouteEdges(graph_, stops_, bus_, 0, final_i);
-			GraphAddRouteEdges(graph_, stops_, bus_, final_i, stops_.size());
-		}
-	}
-
-	router_ptr = new graph::Router<GraphEdge>(graph_);
-}
-
-std::pair<std::vector<RouteItem>, double> TransportCatalogue::FindRoute(const std::string& from, const std::string& to) {
-
-	size_t v1 = stops_index.at(from) * 2;
-	size_t v2 = stops_index.at(to) * 2;
-	//graph::Router::RouteInfo ri;
-	auto router_ = router_ptr->BuildRoute(v1, v2);
-
-	if (!router_) return { {}, -1. };
-	
-	double total_time{ 0 };
-	std::vector<RouteItem> route_items;
-	route_items.reserve(router_->edges.size());
-	//RouteItem ri;
-	//ri.start_stop = from;
-	//ri.time = bus_wait_time_;
-	//route_items.push_back(ri);
-
-	for (const auto edge_index : router_->edges) {
-		auto edge = graph_.GetEdge(edge_index);
-		total_time += edge.weight.weight;
-		route_items.push_back({ stops_data[edge.from / 2], edge.weight.bus, edge.weight.span_count, edge.weight.weight});
-
-	}
-	return { route_items, total_time };
+	route_graph_ptr = new RouteGraph(*this);
+	route_graph_ptr->BuildGraph();	
 }
 
 void TransportCatalogue::AddBusTemp(BusRoute& route) {
@@ -210,4 +143,8 @@ std::map<std::string_view, std::vector<std::string_view>> TransportCatalogue::Ge
 }
 std::unordered_map<std::string_view, geo::Coordinates> TransportCatalogue::GetStops()  const {
 	return stops_;
+}
+
+const RouteGraph& TransportCatalogue::GetRouteGraph() const {
+	return *route_graph_ptr;
 }

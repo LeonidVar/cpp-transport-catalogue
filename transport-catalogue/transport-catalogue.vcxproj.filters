@@ -51,6 +51,9 @@
     <ClInclude Include="router.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="transport_router.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="domain.cpp">
@@ -79,6 +82,9 @@
     </ClCompile>
     <ClCompile Include="json_builder.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="transport_router.cpp">
+      <Filter>Header Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
