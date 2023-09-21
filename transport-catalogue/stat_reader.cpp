@@ -34,7 +34,7 @@ void PrintStop(const TransportCatalogue& tc, const std::string& stop, std::ostre
 	std::cout << "Stop "s << stop;
 
 	if (tc.IsStop(stop)) {
-		std::set<std::string_view> buses = tc.GeStopInfo(stop);
+		std::set<std::string_view> buses = tc.GetStopInfo(stop);
 		if (buses.empty()) {
 			os << ": no buses"s << std::endl;
 		}

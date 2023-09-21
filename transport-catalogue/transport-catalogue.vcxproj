@@ -70,6 +70,9 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);G:\cpp\protobuf-cpp-3.21.12\protobuf-3.21.12\src</IncludePath>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -138,9 +141,11 @@
     <ClInclude Include="map_renderer.h" />
     <ClInclude Include="ranges.h" />
     <ClInclude Include="router.h" />
+    <ClInclude Include="serialization.h" />
     <ClInclude Include="stat_reader.h" />
     <ClInclude Include="svg.h" />
     <ClInclude Include="transport_catalogue.h" />
+    <ClInclude Include="transport_catalogue.pb.h" />
     <ClInclude Include="transport_router.h" />
   </ItemGroup>
   <ItemGroup>
@@ -150,10 +155,18 @@
     <ClCompile Include="json_reader.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="map_renderer.cpp" />
+    <ClCompile Include="serialization.cpp" />
     <ClCompile Include="stat_reader.cpp" />
     <ClCompile Include="svg.cpp" />
     <ClCompile Include="transport_catalogue.cpp" />
+    <ClCompile Include="transport_catalogue.pb.cc" />
     <ClCompile Include="transport_router.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="transport_catalogue.proto" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="CMakeLists.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

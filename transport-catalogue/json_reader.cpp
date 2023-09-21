@@ -1,5 +1,6 @@
 ﻿#include "json_reader.h"
 #include "transport_router.h"
+#include "serialization.h"
 
 namespace JSON{
 using namespace std::string_literals;
@@ -29,18 +30,28 @@ svg::Color JsonReader::GetColor(const json::Node& color) {
     }
 }
 
-void JsonReader::LoadFromJson() {
+void JsonReader::MakeBase() {
     const auto& request = doc.GetRoot().AsDict();
     // Обработка запросов на формирование БД
     BaseRequests(request.at("base_requests"s).AsArray());
     // Получение параметров по скорости и времени ожидания автобуса
     RoutingRequest(request.at("routing_settings"s).AsDict());
     tc.CompleteInput();
-    // Получение параметров SVG и рисование карты в string
-    RenderSettings(request.at("render_settings"s).AsDict());
-    // Обработка запросов на выдачу
-    StatRequests(request.at("stat_requests"s).AsArray());       
+    // настройки отрисовки SVG карты
+    //RenderSettings(request.at("render_settings"s).AsDict());
+    // настройки сериализации
+    MakeBaseSerializationRequests(request.at("serialization_settings"s).AsDict());
 }
+
+void JsonReader::ProcessRequests() {
+    const auto& request = doc.GetRoot().AsDict();
+    // настройки сериализации
+    ProcessSerializationRequests(request.at("serialization_settings"s).AsDict());
+    // Обработка запросов на выдачу
+    StatRequests(request.at("stat_requests"s).AsArray());   
+}
+        
+
 
 void JsonReader::BaseRequests(const json::Array& base_requests) {
     for (const auto& input : base_requests) {
@@ -105,6 +116,16 @@ void JsonReader::RenderSettings(const json::Dict& render_settings) {
     svg = std::move(out.str());
 }
 
+void JsonReader::MakeBaseSerializationRequests(const json::Dict& serialization_settings) {
+    out_file = serialization_settings.at("file").AsString();
+    Serialize(tc, out_file);
+}
+
+void JsonReader::ProcessSerializationRequests(const json::Dict& serialization_settings) {
+    in_file = serialization_settings.at("file").AsString();
+    Deserialize(tc, out_file);
+}
+
 void JsonReader::StatRequests(const json::Array& stat_requests) {
     json::Array out_print;
 
@@ -115,7 +136,7 @@ void JsonReader::StatRequests(const json::Array& stat_requests) {
         const auto& cur_map = input.AsDict();
         if (cur_map.at("type"s).AsString() == "Stop"s) {
             if (tc.IsStop(cur_map.at("name"s).AsString())) {
-                std::set<std::string_view> buses = tc.GeStopInfo(cur_map.at("name"s).AsString());
+                std::set<std::string_view> buses = tc.GetStopInfo(cur_map.at("name"s).AsString());
                 json::Builder stop_arr_b;
                 stop_arr_b.StartArray();
                 for (auto& bus : buses) {

@@ -6,6 +6,20 @@
 using namespace TransportGuide;
 using namespace domain;
 
+void TransportCatalogue::AddDsrlzStop(const domain::Stop& stop, size_t id) {
+	stops_data.push_back(stop.name);
+	stops_.insert({ stops_data.back(), stop.xy });
+	stops_index[stops_data[id]] = id;
+}
+
+void TransportCatalogue::AddDsrlzDistance(int from_id, int to_id, int dist) {
+	stops_distance[{stops_data[from_id], stops_data[to_id]}] = dist;
+}
+
+//void TransportCatalogue::AddDsrlzBus(std::string name, std::vector<int> stops, bool is_roundtrip) {
+//
+//}
+
 void TransportCatalogue::AddStopX(const Stop& stop, std::vector<std::pair<int, std::string>>& stops_dist) {
 	stops_data.push_back(stop.name);
 	stops_.insert({ stops_data.back(), stop.xy });
@@ -125,11 +139,24 @@ bool TransportCatalogue::IsStop(const std::string& name) const {
 	return (std::find(stops_data.begin(), stops_data.end(), name) != stops_data.end());
 }
 
-RouteInfo TransportCatalogue::GetRouteInfo(const std::string& name) const {
+//bool TransportCatalogue::IsRoundRoute(const std::string& bus_) const {
+//	return buses_info.at(bus_).is_round_trip;
+//}
+
+RouteInfo TransportCatalogue::GetRouteInfo(const std::string_view name) const {
 	return buses_info.at(name);
 }
 
-std::set<std::string_view> TransportCatalogue::GeStopInfo(const std::string& name) const {
+size_t TransportCatalogue::GetStopId(const std::string_view stop) const {
+	return stops_index.at(stop);
+}
+
+std::string TransportCatalogue::GetStopName(size_t id) const {
+	return stops_data[id];
+}
+
+
+std::set<std::string_view> TransportCatalogue::GetStopInfo(const std::string& name) const {
 	if (stops_buses.count(name)) {
 		return stops_buses.at(name);
 	}
@@ -143,6 +170,9 @@ std::map<std::string_view, std::vector<std::string_view>> TransportCatalogue::Ge
 }
 std::unordered_map<std::string_view, geo::Coordinates> TransportCatalogue::GetStops()  const {
 	return stops_;
+}
+std::unordered_map<std::pair<std::string_view, std::string_view>, int, domain::PairStopsHasher> TransportCatalogue::GetStopDistances() const {
+	return stops_distance;
 }
 
 const RouteGraph& TransportCatalogue::GetRouteGraph() const {

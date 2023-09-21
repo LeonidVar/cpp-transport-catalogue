@@ -9,6 +9,7 @@
 #include "svg.h"
 #include "geo.h"
 #include "transport_catalogue.h"
+#include "domain.h"
 
 namespace renderer {
 struct Settings {
