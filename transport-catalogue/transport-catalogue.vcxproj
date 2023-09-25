@@ -71,7 +71,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);G:\cpp\protobuf-cpp-3.21.12\protobuf-3.21.12\src</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);G:\cpp\protobuf-cpp-3.21.12\protobuf-3.21.12\src;D:\cpp\protobuf-3.21.12\Protobuf\lib</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -164,6 +164,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="transport_catalogue.proto" />
+    <None Include="transport_router.proto" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="CMakeLists.txt" />

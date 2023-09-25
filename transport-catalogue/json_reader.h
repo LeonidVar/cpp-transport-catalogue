@@ -28,10 +28,10 @@ private:
 	
 	void BaseRequests(const json::Array& base_requests);
 	void RoutingRequest(const json::Dict& routing_settings);
-	void MakeBaseSerializationRequests(const json::Dict& serialization_settings);
-	void ProcessSerializationRequests(const json::Dict& serialization_settings);
+	void MakeBaseSerializationRequests(Serializator& sz);
+	void ProcessSerializationRequests(Serializator& sz);
 	void StatRequests(const json::Array& stat_requests);
-	void RenderSettings(const json::Dict& render_settings);
+	renderer::Settings RenderSettings(const json::Dict& render_settings, Serializator& sz);
 	std::string Print(const json::Node& node);
 	svg::Point GetPoint(const json::Array& data);
 	svg::Color GetColor(const json::Node& color);

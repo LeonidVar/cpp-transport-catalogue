@@ -32,21 +32,27 @@ svg::Color JsonReader::GetColor(const json::Node& color) {
 
 void JsonReader::MakeBase() {
     const auto& request = doc.GetRoot().AsDict();
+    
     // Обработка запросов на формирование БД
     BaseRequests(request.at("base_requests"s).AsArray());
     // Получение параметров по скорости и времени ожидания автобуса
     RoutingRequest(request.at("routing_settings"s).AsDict());
+    
     tc.CompleteInput();
+    // настройки сериализации - файл БД
+    Serializator sz(tc, request.at("serialization_settings"s).AsDict().at("file").AsString());
     // настройки отрисовки SVG карты
-    //RenderSettings(request.at("render_settings"s).AsDict());
-    // настройки сериализации
-    MakeBaseSerializationRequests(request.at("serialization_settings"s).AsDict());
+    RenderSettings(request.at("render_settings"s).AsDict(), sz);
+    
+    MakeBaseSerializationRequests(sz);
 }
 
 void JsonReader::ProcessRequests() {
     const auto& request = doc.GetRoot().AsDict();
-    // настройки сериализации
-    ProcessSerializationRequests(request.at("serialization_settings"s).AsDict());
+    in_file = request.at("serialization_settings"s).AsDict().at("file").AsString();
+    Serializator sz(tc, in_file);   
+    // десериализация файла с данными
+    ProcessSerializationRequests(sz);
     // Обработка запросов на выдачу
     StatRequests(request.at("stat_requests"s).AsArray());   
 }
@@ -92,7 +98,7 @@ void JsonReader::RoutingRequest(const json::Dict& routing_settings) {
     tc.bus_velocity_ = routing_settings.at("bus_velocity"s).AsDouble() / 60 * 1000; // км/ч -> м/мин
 }
 
-void JsonReader::RenderSettings(const json::Dict& render_settings) {
+renderer::Settings JsonReader::RenderSettings(const json::Dict& render_settings, Serializator& sz) {
     renderer::Settings rs;
     rs.width = render_settings.at("width"s).AsDouble();
     rs.height = render_settings.at("height"s).AsDouble();
@@ -110,20 +116,33 @@ void JsonReader::RenderSettings(const json::Dict& render_settings) {
         rs.color_palette.push_back(GetColor(color));
     }
 
+    sz.SerializeRenderSettings(rs);
     std::ostringstream out;
     renderer::MapRenderer mr(rs, tc, out);
     mr.RenderMap();
     svg = std::move(out.str());
+    return rs;
 }
 
-void JsonReader::MakeBaseSerializationRequests(const json::Dict& serialization_settings) {
-    out_file = serialization_settings.at("file").AsString();
-    Serialize(tc, out_file);
+void JsonReader::MakeBaseSerializationRequests(Serializator& sz) {
+    sz.SerializeStops();
+    sz.SerializeBuses();
+    sz.SerializeDistances();
+    sz.SerializeGraph();
+    sz.MakeDataFile();
 }
 
-void JsonReader::ProcessSerializationRequests(const json::Dict& serialization_settings) {
-    in_file = serialization_settings.at("file").AsString();
-    Deserialize(tc, out_file);
+void JsonReader::ProcessSerializationRequests(Serializator& sz) {
+  
+    sz.Deserialize();
+
+    std::ostringstream out;
+    renderer::Settings rs = sz.DeserializeRenderSettings();
+    renderer::MapRenderer mr(rs, tc, out);
+    mr.RenderMap();
+    svg = std::move(out.str());
+    sz.DeserializeRouter();
+    
 }
 
 void JsonReader::StatRequests(const json::Array& stat_requests) {
@@ -175,9 +194,8 @@ void JsonReader::StatRequests(const json::Array& stat_requests) {
                 .Key("request_id"s).Value(input.AsDict().at("id"s).AsInt());
         }
         else if (input.AsDict().at("type"s).AsString() == "Route"s) {
-            //if (tc.IsBus(input.AsDict().at("name"s).AsString())) {
-            auto rg = tc.GetRouteGraph();
-            auto [items, time] = rg.FindRoute(input.AsDict().at("from"s).AsString(), input.AsDict().at("to"s).AsString());
+            RouteGraph* rg = tc.GetRouteGraph();
+            auto [items, time] = rg->FindRoute(input.AsDict().at("from"s).AsString(), input.AsDict().at("to"s).AsString());
             if (time >= 0) {
                 result
                     .Key("request_id"s).Value(input.AsDict().at("id"s).AsInt())
@@ -208,7 +226,6 @@ void JsonReader::StatRequests(const json::Array& stat_requests) {
                     .Key("error_message"s).Value("not found"s);
             }
         }
-
         out_print.push_back(result.EndDict().Build().AsDict());
     }
     out << Print(out_print);

@@ -101,6 +101,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="transport_catalogue.proto" />
+    <None Include="transport_router.proto" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="CMakeLists.txt" />

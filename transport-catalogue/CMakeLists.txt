@@ -6,11 +6,15 @@ set(CMAKE_CXX_STANDARD 17)
 find_package(Protobuf REQUIRED)
 find_package(Threads REQUIRED)
 
-protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS transport_catalogue.proto)
+protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS transport_catalogue.proto transport_router.proto)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -Wextra -Wstrict-overflow -Werror=vla -fsanitize=address -g -O0 -fno-omit-frame-pointer -fno-optimize-sibling-calls")
+# Set default compile flags for GCC
+if(CMAKE_COMPILER_IS_GNUCXX)
+    message(STATUS "GCC detected, adding compile flags")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++98 -pedantic -Wall -Wextra")
+endif(CMAKE_COMPILER_IS_GNUCXX)
 
-set(TRANSPORT_CATALOGUE_FILES geo.h serialization.h serialization.cpp transport_catalogue.cpp transport_catalogue.h json.h json.cpp json_reader.cpp json_reader.h domain.h request_handler.cpp request_handler.h geo.cpp svg.h svg.cpp map_renderer.cpp map_renderer.h domain.cpp json_builder.h json_builder.cpp router.h graph.h ranges.h transport_router.cpp transport_router.h )
+set(TRANSPORT_CATALOGUE_FILES geo.h serialization.h serialization.cpp transport_catalogue.cpp transport_catalogue.h json.h json.cpp json_reader.cpp json_reader.h domain.h svg.h svg.cpp map_renderer.cpp map_renderer.h domain.cpp json_builder.h json_builder.cpp router.h graph.h ranges.h transport_router.cpp transport_router.h )
 list(TRANSFORM TRANSPORT_CATALOGUE_FILES PREPEND "")
 
 add_executable(transport_catalogue main.cpp ${PROTO_SRCS} ${PROTO_HDRS} ${TRANSPORT_CATALOGUE_FILES})

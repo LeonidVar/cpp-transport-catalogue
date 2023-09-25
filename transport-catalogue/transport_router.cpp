@@ -1,5 +1,5 @@
 #include "transport_router.h"
-
+#include <iostream>
 using namespace TransportGuide;
 using namespace domain;
 
@@ -26,13 +26,14 @@ void RouteGraph::GraphAddRouteEdges(graph::DirectedWeightedGraph<GraphEdge>& gra
 void RouteGraph::BuildGraph(){
 	graph::DirectedWeightedGraph<GraphEdge> graph_t(tc.stops_data.size() * 2);
 	graph_ = std::move(graph_t);
+	//std::cout << "GetVertexCount0 " << graph_.GetVertexCount() << std::endl;
 	
 	// ребра ожидания автобуса на остановке
 	for (size_t index = 0; index != tc.stops_data.size(); ++index) {
 		graph_.AddEdge({ index * 2, index * 2 + 1,
 			{static_cast<double>(tc.bus_wait_time_), 0, ""} });
 	}
-
+	//std::cout << "GetVertexCount1 " << graph_.GetVertexCount() << std::endl;
 	// ребра между остановками
 	for (const auto& [bus_, stops_] : tc.buses_) {
 		if (tc.buses_info.at(bus_).is_round_trip) {
@@ -49,21 +50,31 @@ void RouteGraph::BuildGraph(){
 	router_ptr = new graph::Router<GraphEdge>(graph_);
 }
 
+void RouteGraph::BuildDeserializedGraph() {
+	router_ptr = new graph::Router<GraphEdge>(graph_);
+}
+
 std::pair<std::vector<RouteItem>, double> RouteGraph::FindRoute(const std::string& from, const std::string& to) {
 	size_t v1 = tc.stops_index.at(from) * 2;
 	size_t v2 = tc.stops_index.at(to) * 2;
-
 	auto router_ = router_ptr->BuildRoute(v1, v2);
 	if (!router_) return { {}, -1. }; // отрицательная длина => нет маршрута
-
 	double total_time{ 0 };
 	std::vector<RouteItem> route_items;
 	route_items.reserve(router_->edges.size());
-
 	for (const auto edge_index : router_->edges) {
 		auto edge = graph_.GetEdge(edge_index);
 		total_time += edge.weight.weight;
-		route_items.push_back({ tc.stops_data[edge.from / 2], edge.weight.bus, edge.weight.span_count, edge.weight.weight });
+		route_items.push_back({ tc.stops_data[edge.from / 2], /*edge.weight.bus*/"777", edge.weight.span_count, edge.weight.weight});
 	}
+
 	return { route_items, total_time };
+}
+
+graph::DirectedWeightedGraph<domain::GraphEdge>* RouteGraph::GetGraph() {
+	return &graph_;
+}
+
+graph::Router<domain::GraphEdge>* RouteGraph::GetRouter() {
+	return router_ptr;
 }

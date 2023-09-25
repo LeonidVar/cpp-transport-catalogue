@@ -11,6 +11,7 @@
 #include "transport_catalogue.h"
 #include "domain.h"
 
+
 namespace renderer {
 struct Settings {
     double width = 0;

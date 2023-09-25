@@ -1,5 +1,5 @@
 syntax = "proto3";
-
+import "transport_router.proto";
 package bus_serialize;
 
 message Bus {
@@ -21,9 +21,52 @@ message Distance {
 	uint32 to_id = 3;
 }
 
+message Point {
+    double x = 1;
+    double y = 2;
+}
+
+message Rgb {
+    uint32 r = 1;
+    uint32 g = 2;
+    uint32 b = 3;
+}
+
+message Rgba {
+    uint32 r = 1;
+    uint32 g = 2;
+    uint32 b = 3;
+    double o = 4;
+}
+
+message Color {
+    oneof color {
+        string string_color = 1;
+        Rgb rgb_color = 2;
+        Rgba rgba_color = 3;
+    }
+}
+
+message RenderSettings {
+    double width = 1;
+    double height = 2;
+    double padding = 3;
+    double line_width = 4;
+    double stop_radius = 5;
+    uint32 bus_label_font_size = 6;
+    Point bus_label_offset = 7;
+    uint32 stop_label_font_size = 8;
+    Point stop_label_offset = 9;
+    Color underlayer_color = 10;
+    double underlayer_width = 11;
+    repeated Color color_palette = 12;
+}
+
 
 message TransportCatalogue {
     repeated Bus buses = 1;
     repeated Stop stops = 2;
     repeated Distance stop_distances = 3;
+    RenderSettings render_settings = 4;
+    router_serialize.TransportRouter router = 5;
 }

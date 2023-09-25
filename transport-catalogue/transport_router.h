@@ -10,7 +10,10 @@ public:
 	void GraphAddRouteEdges(graph::DirectedWeightedGraph<domain::GraphEdge>& graph_, const std::vector<std::string_view>& stops_,
 		std::string_view bus_, const size_t i_start, const size_t i_stop);
 	void BuildGraph();
+	void BuildDeserializedGraph();
 	std::pair<std::vector<domain::RouteItem>, double> FindRoute(const std::string& from, const std::string& to);
+	graph::DirectedWeightedGraph<domain::GraphEdge>* GetGraph();
+	graph::Router<domain::GraphEdge>* GetRouter();
 
 private:
 	const TransportGuide::TransportCatalogue& tc;

@@ -11,6 +11,7 @@
 #include "domain.h"
 #include "graph.h"
 #include "router.h"
+//#include "serialization.h"
 //#include "transport_router.h"
 
 class RouteGraph;
@@ -49,7 +50,10 @@ public:
 	size_t GetStopId(const std::string_view stop) const;
 	std::string GetStopName(size_t id) const;
 
-	const RouteGraph& GetRouteGraph() const;
+	size_t GetBusId(const std::string_view bus) const;
+	std::string GetBusName(size_t id) const;
+
+	RouteGraph* GetRouteGraph();
 
 	// Выдача маршрутов с остановками
 	std::map<std::string_view, std::vector<std::string_view>> GetBuses() const;
@@ -73,6 +77,7 @@ private:
 	std::deque<std::string> stops_data;
 	//Номера остановок
 	std::unordered_map<std::string_view, size_t> stops_index;
+	std::unordered_map<std::string_view, size_t> buses_index;
 	//Координаты всех остановок
 	std::vector<geo::Coordinates> coordinates_;
 	//Остановки с географическими координатами
@@ -95,5 +100,8 @@ private:
 	std::unordered_map<std::string_view, domain::RouteInfo> buses_info;
 	
 	RouteGraph* route_graph_ptr{ nullptr };
+
+public:
+	void SetRoutePtr();
 };
 }

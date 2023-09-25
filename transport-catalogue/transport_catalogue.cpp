@@ -13,6 +13,7 @@ void TransportCatalogue::AddDsrlzStop(const domain::Stop& stop, size_t id) {
 }
 
 void TransportCatalogue::AddDsrlzDistance(int from_id, int to_id, int dist) {
+	//std::cout << "Add dist from " << from_id << " to " << to_id << std::endl;
 	stops_distance[{stops_data[from_id], stops_data[to_id]}] = dist;
 }
 
@@ -71,12 +72,18 @@ void TransportCatalogue::CompleteInput() {
 	route_graph_ptr->BuildGraph();	
 }
 
+void TransportCatalogue::SetRoutePtr() {
+	route_graph_ptr = new RouteGraph(*this);
+}
+
 void TransportCatalogue::AddBusTemp(BusRoute& route) {
 	bus_tmp.push_back(std::move(route));
 }
 
 void TransportCatalogue::AddBusX(BusRoute& route) {
 	buses_data.push_back(route.name);
+	//buses_index[buses_data.back()] = buses_data.size() - 1;
+
 	std::vector<std::string_view> stops_sv;
 	// Номер конечной остановки, используется для некольцевых маршрутов
 	size_t final_stop{ route.stops.size() };
@@ -155,6 +162,15 @@ std::string TransportCatalogue::GetStopName(size_t id) const {
 	return stops_data[id];
 }
 
+size_t TransportCatalogue::GetBusId(const std::string_view bus) const {
+	return buses_index.at(bus);
+}
+
+std::string TransportCatalogue::GetBusName(size_t id) const {
+	return buses_data[id];
+}
+
+
 
 std::set<std::string_view> TransportCatalogue::GetStopInfo(const std::string& name) const {
 	if (stops_buses.count(name)) {
@@ -175,6 +191,9 @@ std::unordered_map<std::pair<std::string_view, std::string_view>, int, domain::P
 	return stops_distance;
 }
 
-const RouteGraph& TransportCatalogue::GetRouteGraph() const {
-	return *route_graph_ptr;
+RouteGraph* TransportCatalogue::GetRouteGraph() {
+	if (route_graph_ptr == nullptr) {
+		route_graph_ptr = new RouteGraph(*this);		
+	}
+	return route_graph_ptr;
 }
